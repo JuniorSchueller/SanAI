@@ -1,0 +1,99 @@
+<html>
+<head>
+    <title>SanAI</title>
+    <link rel="shortcut icon" href="./assets/images/SanAI.png" type="image/png">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <i class="fas fa-plus" title="Novo Chat" style="cursor: pointer;" id="clearChat"></i>
+            <i class="fas fa-file-export" title="Exportar Chat" style="cursor: pointer;" id="exportChat"></i>
+            <i class="fas fa-cog" title="Configurações" style="cursor: pointer;" id="openSettings"></i>
+        </div>
+        <div class="main">
+            <div class="header">
+                <div class="title">SanAI</div>
+                <img src="<%= user['avatar'] %>" title="Perfil" class="profile-icon" id="openLogin">
+            </div>
+            <div class="content">
+                <div class="greeting-container">
+                    <h1>Olá, <%= (user['gName'].split(' '))[0] %>!</h1>
+                </div>
+                    <div class="message-list">
+                    <% chatInfo.history.forEach(function(item) { %>
+                      <% item.parts.forEach(function(part) { %>
+                        <div class="message <%= item.role === 'user' ? 'user' : 'ai' %>">
+                          <img src="<%= item.role === 'user' ? user.avatar : './assets/images/SanAI.png' %>" class="profile-icon">
+                          <div class="text">
+                            <% if (item.role === 'model') { %>
+                                <%- marked.parse(part.text) %>
+                              <% } else { %>
+                                <p><%= part.text %></p>
+                              <% } %>
+                          </div>
+                        </div>
+                      <% }); %>
+                    <% }); %>
+                    </div>
+            </div>
+            <div class="footer">
+                <textarea placeholder="Mensagem SanAI..." id="messageText"></textarea>
+                <i title="Enviar Mensagem" class="fas fa-paper-plane" id="sendMessage"></i>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configurações</h2>
+                <span class="close-btn" id="closeSettings">&times;</span>
+            </div>
+            <div class="modal-body">
+                <label for="fontSizeSlider">Tamanho das Letras:</label><br>
+                <input type="range" id="fontSizeSlider" min="12" max="24" value="16"><br>
+                <label for="voiceVolumeSlider">Volume da Voz:</label><br>
+                <input type="range" id="voiceVolumeSlider" min="0" max="1" step="0.1" value="0.5"><br>
+                <label for="voiceSelect">Voz:</label><br>
+                <select id="voiceSelect">
+                    <option value="voice1">Voz 1</option>
+                    <option value="voice2">Voz 2</option>
+                    <option value="voice3">Voz 3</option>
+                </select>
+                <button id="playVoiceBtn">Reproduzir</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="logged">
+                <div class="modal-header">
+                    <h2>Perfil</h2>
+                    <span class="close-btn" id="closeLogin">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="user-info">
+                        <img src="<%= user['avatar'] %>">
+                        <h2><%= user['name'] %></h2>
+                        <h3><%= user['email'] %></h3>
+                        <button id="logoutButton">
+                            Sair
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="userAvatar" value="<%= user['avatar'] %>">
+
+    <link rel="stylesheet" href="./assets/style/chat.css">
+    <script src="./assets/script/chat.js"></script>
+</body>
+</html>
