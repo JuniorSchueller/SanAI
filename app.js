@@ -274,6 +274,10 @@ app.post('/api/deleteChat', async (req, res) => {
     }
 });
 
+app.get('/api/chats', (req, res) => {
+    res.json(chatList);
+});
+
 app.use((req, res, next) => {
     if (req.method === "GET") {
         res.redirect('/');
