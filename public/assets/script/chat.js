@@ -427,13 +427,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clearChat.addEventListener('click', () => {
         if (url.has('id') && url.get('id')) {
-            fetch(`/api/deleteChat?chatId=${url.get('id')}`, {
+            /*fetch(`/api/deleteChat?chatId=${url.get('id')}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'cookies': document.cookie,
                 }  
-            });
+            });*/
             
             location.href = './chat';
         } else {
