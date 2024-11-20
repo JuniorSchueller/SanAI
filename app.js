@@ -14,14 +14,40 @@ const {
     HarmBlockThreshold,
 } = require("@google/generative-ai");
 
-const chatList = {};
+const chatListPath = path.join(__dirname, 'chatList.json');
 
-// Discord oAuth2 Configuration
+function loadChatList() {
+    if (fs.existsSync(chatListPath)) {
+        const data = fs.readFileSync(chatListPath, 'utf8');
+        return JSON.parse(data);
+    } else {
+        return {};
+    }
+}
+
+function saveChatList() {
+    fs.writeFileSync(chatListPath, JSON.stringify(chatList, null, 2));
+}
+
+let chatList = loadChatList();
+
+function addChatToList(chatId, author) {
+    chatList[chatId] = {
+        history: [],
+        author: author,
+    };
+    saveChatList();
+}
+
+function deleteChatFromList(chatId) {
+    delete chatList[chatId];
+    saveChatList();
+}
+
 const clientId = process.env.DISCORD_CLIENT_ID;
 const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 const redirectUri = process.env.DISCORD_REDIRECT_URI;
 
-// Gemini AI Configuration
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
@@ -40,7 +66,6 @@ const generationConfig = {
     responseMimeType: "text/plain",
 };
 
-// Internal Functions
 function removeKeyInPlace(obj, keyToRemove) {
     if (obj.hasOwnProperty(keyToRemove)) {
       delete obj[keyToRemove];
@@ -83,7 +108,6 @@ function generateChatID() {
     return sequence;
 }
 
-// Express Server Configuration
 const app = express();
 app.use(express.static(path.join(__dirname, '/public')));
 app.set('views', __dirname + '/pages');
@@ -114,7 +138,6 @@ function isAuthenticated(req, res, next) {
         });
 }
 
-// Server Routes
 app.get('/chat', async (req, res) => {
     const { xAuthToken } = req.cookies;
     const { id } = req.query;
@@ -222,11 +245,7 @@ app.post('/api/generate', async (req, res) => {
                 }
             } else {
                 const newChatId = generateChatID();
-                chatList[newChatId] = {
-                    history: [],
-                    author: userData.username,
-                };
-
+                addChatToList(newChatId, userData.username);
                 const response = await generateReply(newChatId, prompt);
 
                 return res.status(200).json({ 'status': 200, 'message': response, 'chatId': newChatId });
@@ -258,9 +277,8 @@ app.post('/api/deleteChat', async (req, res) => {
                         return res.status(403).json({ 'status': 403, 'message': 'Forbidden' });
                     }
 
-                    removeKeyInPlace(chatList, chatId);
-
-                    return res.status(200).json({ 'status': 200});
+                    deleteChatFromList(chatId);
+                    return res.status(200).json({ 'status': 200 });
                 } else {
                     return res.status(404).json({ 'status': 404, 'message': 'Not Found' });
                 }
@@ -274,10 +292,6 @@ app.post('/api/deleteChat', async (req, res) => {
     }
 });
 
-app.get('/api/chats', (req, res) => {
-    res.json(chatList);
-});
-
 app.use((req, res, next) => {
     if (req.method === "GET") {
         res.redirect('/');
@@ -287,5 +301,5 @@ app.use((req, res, next) => {
 });
 
 app.listen(3666, () => {
-    console.log('Hosted in http://localhost:3666/');
+    console.log('Server running on port 3666');
 });
