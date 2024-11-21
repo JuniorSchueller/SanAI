@@ -10,7 +10,7 @@ Com base no poderoso modelo **Gemini 1.5 Flash 8B**, da Google, e treinada utili
 - **Conhecimento de memória e endereços**: reconhece endereços de memória utilizados nos jogos da série, facilitando personalizações avançadas.  
 - **Documentação técnica integrada**: inclui descrições dos comandos e exemplos práticos.  
 
-## 🛠️ **Como Instalar e Usar**  
+## 🛠️ **Como Usar**  
 
 ### Pré-requisitos  
 - Navegador atualizado (Chrome, Firefox, etc.).  
