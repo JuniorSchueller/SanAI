@@ -332,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (url.has('id') && url.get('id')) {
         document.querySelector('.greeting-container').style.display = 'none';
         setTimeout(() => {
+            const messageList = document.querySelector('.message-list');
             messageList.scrollTop = messageList.scrollHeight;
         }, 1000);
     }

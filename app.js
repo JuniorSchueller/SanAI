@@ -1,3 +1,4 @@
+const database = require('./database');
 const express = require('express');
 const ejs = require('ejs');
 const cors = require('cors');
@@ -14,40 +15,12 @@ const {
     HarmBlockThreshold,
 } = require("@google/generative-ai");
 
-const chatListPath = path.join(__dirname, 'chatList.json');
-
-function loadChatList() {
-    if (fs.existsSync(chatListPath)) {
-        const data = fs.readFileSync(chatListPath, 'utf8');
-        return JSON.parse(data);
-    } else {
-        return {};
-    }
-}
-
-function saveChatList() {
-    fs.writeFileSync(chatListPath, JSON.stringify(chatList, null, 2));
-}
-
-let chatList = loadChatList();
-
-function addChatToList(chatId, author) {
-    chatList[chatId] = {
-        history: [],
-        author: author,
-    };
-    saveChatList();
-}
-
-function deleteChatFromList(chatId) {
-    delete chatList[chatId];
-    saveChatList();
-}
-
+// Discord oAuth2 Configuration
 const clientId = process.env.DISCORD_CLIENT_ID;
 const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 const redirectUri = process.env.DISCORD_REDIRECT_URI;
 
+// Gemini AI Configuration
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
@@ -66,6 +39,7 @@ const generationConfig = {
     responseMimeType: "text/plain",
 };
 
+// Internal Functions
 function removeKeyInPlace(obj, keyToRemove) {
     if (obj.hasOwnProperty(keyToRemove)) {
       delete obj[keyToRemove];
@@ -73,13 +47,17 @@ function removeKeyInPlace(obj, keyToRemove) {
 }
 
 async function generateReply(chatId, prompt) {
+    const chatHistory = await database.history.get(chatId);
+
     const chatSession = model.startChat({
         generationConfig,
-        history: chatList[chatId]['history'],
+        history: chatHistory,
     });
 
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
+
+    await database.history.save(chatId, await chatSession.getHistory());
 
     return response;
 }
@@ -108,6 +86,7 @@ function generateChatID() {
     return sequence;
 }
 
+// Express Server Configuration
 const app = express();
 app.use(express.static(path.join(__dirname, '/public')));
 app.set('views', __dirname + '/pages');
@@ -138,6 +117,7 @@ function isAuthenticated(req, res, next) {
         });
 }
 
+// Server Routes
 app.get('/chat', async (req, res) => {
     const { xAuthToken } = req.cookies;
     const { id } = req.query;
@@ -155,10 +135,10 @@ app.get('/chat', async (req, res) => {
                 author: userData.username,
             };
 
-            if (id && chatList[id]) {
+            if (id && await database.chat.exists(id)) {
                 chatInfo = {
-                    history: chatList[id].history,
-                    author: chatList[id].author
+                    history: await database.history.get(id),
+                    author: await database.chat.get(id, 'author')
                 };
             }
 
@@ -173,13 +153,13 @@ app.get('/chat', async (req, res) => {
                 marked
             });
         } else {
-            res.clearCookie('xAuthToken');
-            res.redirect('/login');
+            //res.clearCookie('xAuthToken');
+            //res.redirect('/login');
         }
     } catch (err) {
         console.error(err);
-        res.clearCookie('xAuthToken');
-        res.redirect('/login');
+        //res.clearCookie('xAuthToken');
+        //res.redirect('/login');
     }
 });
 
@@ -232,8 +212,8 @@ app.post('/api/generate', async (req, res) => {
 
         if (userData) {
             if (chatId) {
-                if (chatList[chatId]) {
-                    if (chatList[chatId]['author'] !== userData.username) {
+                if (await database.chat.exists(chatId)) {
+                    if (await database.chat.get(chatId, 'author') !== userData.username) {
                         return res.status(403).json({ 'status': 403, 'message': 'Forbidden' });
                     }
 
@@ -245,7 +225,8 @@ app.post('/api/generate', async (req, res) => {
                 }
             } else {
                 const newChatId = generateChatID();
-                addChatToList(newChatId, userData.username);
+                await database.chat.create(newChatId, userData.username);
+
                 const response = await generateReply(newChatId, prompt);
 
                 return res.status(200).json({ 'status': 200, 'message': response, 'chatId': newChatId });
@@ -272,13 +253,14 @@ app.post('/api/deleteChat', async (req, res) => {
 
         if (userData) {
             if (chatId) {
-                if (chatList[chatId]) {
-                    if (chatList[chatId]['author'] !== userData.username) {
+                if (await database.chat.exists(chatId)) {
+                    if (await database.chat.get(chatId, 'author') !== userData.username) {
                         return res.status(403).json({ 'status': 403, 'message': 'Forbidden' });
                     }
 
-                    deleteChatFromList(chatId);
-                    return res.status(200).json({ 'status': 200 });
+                    await database.chat.delete(chatId);
+
+                    return res.status(200).json({ 'status': 200});
                 } else {
                     return res.status(404).json({ 'status': 404, 'message': 'Not Found' });
                 }
@@ -301,5 +283,5 @@ app.use((req, res, next) => {
 });
 
 app.listen(3666, () => {
-    console.log('Server running on port 3666');
+    console.log('Hosted in http://localhost:3666/');
 });
