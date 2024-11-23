@@ -71,7 +71,7 @@ async function getUserData(token) {
         });
         return response.data;
     } catch (err) {
-        console.error('Error fetching user data', err);
+        await database.logs.send(err);
         return null;
     }
 }
@@ -110,8 +110,8 @@ function isAuthenticated(req, res, next) {
             res.clearCookie('xAuthToken');
             next();
         })
-        .catch((err) => {
-            console.error('Erro ao verificar autenticação:', err);
+        .catch(async (err) => {
+            await database.logs.send(err);
             res.clearCookie('xAuthToken');
             next();
         });
@@ -153,11 +153,11 @@ app.get('/chat', async (req, res) => {
                 marked
             });
         } else {
-            //res.clearCookie('xAuthToken');
-            //res.redirect('/login');
+            res.clearCookie('xAuthToken');
+            res.redirect('/login');
         }
     } catch (err) {
-        console.error(err);
+        await database.logs.send(err);
         //res.clearCookie('xAuthToken');
         //res.redirect('/login');
     }
@@ -187,8 +187,8 @@ app.get('/login', isAuthenticated, async (req, res) => {
         res.cookie('xAuthToken', access_token, { httpOnly: true });
 
         res.redirect('/chat');
-    }).catch((err) => {
-        console.error('Error getting access token', err);
+    }).catch(async (err) => {
+        await database.logs.send(err);
         res.redirect('/login');
     });
 });
@@ -235,7 +235,7 @@ app.post('/api/generate', async (req, res) => {
             return res.status(401).json({ 'status': 401, 'message': 'Unauthorized' });
         }
     } catch (err) {
-        console.error(err);
+        await database.logs.send(err);
         res.status(500).json({ 'status': 500, 'message': 'Internal Server Error' });
     }
 });
@@ -269,7 +269,7 @@ app.post('/api/deleteChat', async (req, res) => {
             return res.status(401).json({ 'status': 401, 'message': 'Unauthorized' });
         }
     } catch (err) {
-        console.error(err);
+        await database.logs.send(err);
         res.status(500).json({ 'status': 500, 'message': 'Internal Server Error' });
     }
 });

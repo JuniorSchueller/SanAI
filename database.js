@@ -140,4 +140,32 @@ const history = {
     }
 }
 
-module.exports = { chat, history }
+const logs = {
+    'send': async function(log) {
+        function formatDate(date) {
+            let day = date.getDate().toString().padStart(2, '0');
+            let month = (date.getMonth() + 1).toString().padStart(2, '0');
+            let year = date.getFullYear();
+            let hours = date.getHours().toString().padStart(2, '0');
+            let minutes = date.getMinutes().toString().padStart(2, '0');
+            let seconds = date.getSeconds().toString().padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+        }
+        
+        let now = new Date();
+
+        const body = {
+            log,
+            'date': formatDate(now)
+        }
+        
+        const req = await requests.post(buildApiUrl(`/logs/`), body);
+        if (req.statusCode === 200) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+module.exports = { chat, history, logs }
