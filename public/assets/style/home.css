@@ -73,3 +73,23 @@ body {
 .content .image img {
     width: 100%;
 }
+
+.footer {
+    width: 100%;
+    background-color: #06071a;
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centraliza horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    box-sizing: border-box;
+    text-align: center; /* Garante que o texto fique centralizado */
+}
+
+.footer p {
+    margin: 0;
+    color: #ccc; /* Cor do texto */
+    font-size: 14px; /* Tamanho da fonte */
+}
